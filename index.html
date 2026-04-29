@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CleverTap WebView Bridge</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #08111f;
+      color: white;
+      padding: 24px;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 14px;
+      border-radius: 10px;
+      border: none;
+      background: #2f6fed;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+  </style>
+
+  <!-- ✅ CleverTap Web SDK -->
+  <script type="text/javascript">
+    var clevertap = {
+      event: [],
+      profile: [],
+      account: [],
+      onUserLogin: [],
+      notifications: [],
+      privacy: []
+    };
+
+    // 👉 Replace with your WEB account ID
+    clevertap.account.push({ id: "4W7-4R8-R65Z" });
+
+    (function () {
+      var wzrk = document.createElement("script");
+      wzrk.type = "text/javascript";
+      wzrk.async = true;
+      wzrk.src = "https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(wzrk, s);
+    })();
+  </script>
+</head>
+
+<body>
+  <h2>CleverTap WebView Bridge</h2>
+  <p>This is a hosted web page. In app WebView, it sends data to CleverTap mobile SDK.</p>
+
+  <input id="identity" value="webview_user_001" placeholder="Identity" />
+  <input id="email" value="webview@test.com" placeholder="Email" />
+  <input id="phone" value="+919999999999" placeholder="Phone" />
+
+  <button onclick="loginUser()">On User Login</button>
+  <button onclick="recordEvent()">Record Event</button>
+  <button onclick="profilePush()">Profile Push</button>
+
+  <script>
+    function sendToApp(payload) {
+      // App (WebView)
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+        return;
+      }
+
+      //  Browser (Web SDK)
+      if (window.clevertap) {
+        if (payload.type === "onUserLogin") {
+          clevertap.onUserLogin.push({
+            Site: payload.data
+          });
+        }
+
+        if (payload.type === "profileSet") {
+          clevertap.profile.push({
+            Site: payload.data
+          });
+        }
+
+        if (payload.type === "recordEvent") {
+          clevertap.event.push(payload.eventName, payload.data);
+        }
+
+        alert("Tracked via CleverTap Web SDK");
+        return;
+      }
+
+      alert("CleverTap not available");
+      console.log(payload);
+    }
+
+    function loginUser() {
+      sendToApp({
+        type: "onUserLogin",
+        data: {
+          Identity: document.getElementById("identity").value,
+          Email: document.getElementById("email").value,
+          Phone: document.getElementById("phone").value,
+          Name: "WebView User",
+          "MSG-push": true,
+          "MSG-email": true,
+          "MSG-sms": true,
+          "MSG-whatsapp": true
+        }
+      });
+    }
+
+    function recordEvent() {
+      sendToApp({
+        type: "recordEvent",
+        eventName: "WebView Button Clicked",
+        data: {
+          Source: window.ReactNativeWebView ? "Mobile WebView" : "Browser Web",
+          Page: "Bridge Demo"
+        }
+      });
+    }
+
+    function profilePush() {
+      sendToApp({
+        type: "profileSet",
+        data: {
+          WebView_User: true,
+          Source: window.ReactNativeWebView ? "Mobile WebView" : "Browser Web"
+        }
+      });
+    }
+  </script>
+</body>
+</html>
